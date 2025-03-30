@@ -16,45 +16,54 @@ st.write("""
 This app allows users to upload an Excel file and view data analytics dashboards and visualizations.
 """)
 
+# Function to load data
+def load_data(file):
+    try:
+        return pd.read_excel(file)
+    except Exception as e:
+        st.error(f"Error loading file: {e}")
+        return None
+
+# Function to display data preview
+def display_data_preview(data):
+    st.write("### Data Preview")
+    st.dataframe(data.head())
+    st.write("### Basic Data Analytics")
+    st.write("Descriptive Statistics")
+    st.write(data.describe())
+    st.write("Column Names")
+    st.write(data.columns.tolist())
+    st.write("Data Types")
+    st.write(data.dtypes)
+
+# Function to display correlation heatmap
+def display_correlation_heatmap(data):
+    st.write("### Correlation Heatmap")
+    corr = data.corr()
+    fig, ax = plt.subplots()
+    sns.heatmap(corr, annot=True, cmap='coolwarm', ax=ax)
+    st.pyplot(fig)
+
+# Function to display bar chart
+def display_bar_chart(data):
+    st.write("### Bar Chart Example")
+    if st.checkbox("Show Bar Chart"):
+        column = st.selectbox("Select column for Bar Chart", data.columns)
+        bar_fig, bar_ax = plt.subplots()
+        data[column].value_counts().plot(kind='bar', ax=bar_ax)
+        st.pyplot(bar_fig)
+
 # Sidebar for file upload
 with st.sidebar:
     uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
 
 if uploaded_file is not None:
-    df = pd.read_excel(uploaded_file)
-
-    # Display data preview and basic analytics in the main page
-    st.write("### Data Preview")
-    st.dataframe(df.head())
-
-    st.write("### Basic Data Analytics")
-
-    # Show basic statistics
-    st.write("Descriptive Statistics")
-    st.write(df.describe())
-
-    # Show column names
-    st.write("Column Names")
-    st.write(df.columns.tolist())
-
-    # Show data types
-    st.write("Data Types")
-    st.write(df.dtypes)
-
-    # Create two columns for dashboards
-    dashboard_col1, dashboard_col2 = st.columns(2)
-
-    with dashboard_col1:
-        st.write("### Correlation Heatmap")
-        corr = df.corr()
-        fig, ax = plt.subplots()
-        sns.heatmap(corr, annot=True, cmap='coolwarm', ax=ax)
-        st.pyplot(fig)
-
-    with dashboard_col2:
-        st.write("### Bar Chart Example")
-        if st.checkbox("Show Bar Chart"):
-            column = st.selectbox("Select column for Bar Chart", df.columns)
-            bar_fig, bar_ax = plt.subplots()
-            df[column].value_counts().plot(kind='bar', ax=bar_ax)
-            st.pyplot(bar_fig)
+    df = load_data(uploaded_file)
+    if df is not None:
+        display_data_preview(df)
+        # Create two columns for dashboards
+        dashboard_col1, dashboard_col2 = st.columns(2)
+        with dashboard_col1:
+            display_correlation_heatmap(df)
+        with dashboard_col2:
+            display_bar_chart(df)
